@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedAssist — Patient Care Navigator</title>
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/static/style.css">
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+</head>
+<body>
+
+<!-- ============================================================
+     APP WRAPPER
+     ============================================================ -->
+<div class="app-wrapper">
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <a href="#" class="brand-logo" onclick="setActivePanel('chat'); return false;">
+        <div class="brand-icon">🏥</div>
+        <div>
+          <div class="brand-name">MedAssist</div>
+          <div class="brand-tagline">Patient Care Navigator</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Navigation</div>
+
+      <button id="nav-chat" class="nav-item-btn" onclick="setActivePanel('chat')">
+        <span class="nav-icon">💬</span> Symptom Chat
+      </button>
+      <button id="nav-medications" class="nav-item-btn" onclick="setActivePanel('medications')">
+        <span class="nav-icon">💊</span> Medication Tracker
+      </button>
+      <button id="nav-appointments" class="nav-item-btn" onclick="setActivePanel('appointments')">
+        <span class="nav-icon">📅</span> Appointments
+      </button>
+
+      <div class="nav-section-label" style="margin-top:8px">Health Tools</div>
+
+      <button id="nav-profile" class="nav-item-btn" onclick="setActivePanel('profile'); loadFamilyProfiles();">
+        <span class="nav-icon">🧍</span> Health Profile & BMI
+      </button>
+      <button id="nav-tips" class="nav-item-btn" onclick="setActivePanel('tips')">
+        <span class="nav-icon">🌿</span> Preventive Health Tips
+      </button>
+      <button id="nav-family" class="nav-item-btn" onclick="setActivePanel('family'); loadFamilyProfiles();">
+        <span class="nav-icon">👨‍👩‍👧</span> Family Profiles
+      </button>
+    </nav>
+
+    <!-- Footer / WHO Badge -->
+    <div class="sidebar-footer">
+      <div class="who-badge-sidebar">
+        <span>🌐</span>
+        <span>WHO · CDC · ICMR guidelines</span>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:rgba(255,255,255,0.3);text-align:center">
+        v1.0.0 · Powered by IBM Watsonx.ai
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <div class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <!-- Mobile hamburger -->
+      <button class="btn-icon d-md-none" onclick="toggleSidebar()" title="Menu">☰</button>
+
+      <!-- Title -->
+      <div class="topbar-title" id="topbar-title">💬 Symptom Chat</div>
+
+      <!-- Actions -->
+      <div class="topbar-actions">
+        <button class="lang-toggle" id="lang-toggle-btn" onclick="toggleLanguage()" title="Toggle Language">
+          🇮🇳 हिंदी
+        </button>
+        <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
+      </div>
+    </header>
+
+    <!-- ======================================================
+         PANEL: CHAT
+         ====================================================== -->
+    <div id="panel-chat" class="panel active">
+      <div class="chat-container">
+
+        <!-- Messages Area -->
+        <div class="chat-messages" id="chat-messages">
+
+          <!-- Welcome Screen -->
+          <div class="chat-welcome" id="chat-welcome">
+            <div class="welcome-icon">🏥</div>
+            <div class="welcome-title">Welcome to MedAssist</div>
+            <div class="welcome-sub">
+              Your AI health companion powered by IBM Watsonx Granite.<br>
+              Describe symptoms in English or Hindi — I'll help guide you.
+            </div>
+            <div class="quick-actions">
+              <div class="quick-chip" onclick="sendQuickQuery('I have a fever and headache since yesterday')">🌡️ Fever &amp; Headache</div>
+              <div class="quick-chip" onclick="sendQuickQuery('I am having chest pain and difficulty breathing')">💔 Chest Pain</div>
+              <div class="quick-chip" onclick="sendQuickQuery('What are tips for managing type 2 diabetes with Indian diet?')">🩸 Diabetes Tips</div>
+              <div class="quick-chip" onclick="sendQuickQuery('Home remedies for cold and cough for my child')">🤧 Cold &amp; Cough</div>
+              <div class="quick-chip" onclick="sendQuickQuery('I have been feeling very stressed and anxious lately')">🧠 Stress &amp; Anxiety</div>
+              <div class="quick-chip" onclick="sendQuickQuery('मुझे पेट में बहुत दर्द हो रहा है')">🇮🇳 Hindi Query</div>
+              <div class="quick-chip" onclick="sendQuickQuery('Signs and symptoms of dengue fever')">🦟 Dengue Symptoms</div>
+              <div class="quick-chip" onclick="sendQuickQuery('My blood pressure reading is 160/100, what should I do?')">❤️ High BP</div>
+            </div>
+            <!-- WHO/CDC Notice -->
+            <div style="margin-top:24px;padding:12px 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text-muted);max-width:440px;margin-left:auto;margin-right:auto">
+              🌐 <strong>Information sourced from WHO and CDC guidelines</strong><br>
+              This tool is for educational purposes only — not a substitute for professional medical advice.
+            </div>
+          </div>
+        </div><!-- end chat-messages -->
+
+        <!-- Chat Input Area -->
+        <div class="chat-input-area">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <small style="color:var(--text-muted)">🇮🇳 Supports English, Hindi &amp; Hinglish</small>
+            <button onclick="clearChat()" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer">🗑️ Clear Chat</button>
+          </div>
+          <div class="input-row">
+            <textarea
+              id="chat-input"
+              class="chat-textarea"
+              placeholder="Describe your symptoms or ask a health question..."
+              rows="1"
+            ></textarea>
+            <button id="send-btn" class="btn-send" onclick="sendMessage()" title="Send">➤</button>
+          </div>
+          <div class="disclaimer-bar">
+            ⚕️ <strong>Medical Disclaimer:</strong> Always consult a licensed doctor for diagnosis and treatment. Emergency: <strong>108</strong>
+          </div>
+        </div>
+
+      </div><!-- end chat-container -->
+    </div><!-- end panel-chat -->
+
+    <!-- ======================================================
+         PANEL: MEDICATIONS
+         ====================================================== -->
+    <div id="panel-medications" class="panel">
+
+      <div class="section-header">
+        <div class="section-title">💊 Medication Tracker</div>
+        <div class="section-sub">Track your medications and monitor adherence to your treatment plan.</div>
+      </div>
+
+      <!-- Adherence Ring -->
+      <div class="adherence-ring-wrapper">
+        <div class="ring-container">
+          <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
+            <circle class="ring-bg"   cx="50" cy="50" r="45"/>
+            <circle class="ring-fill" id="ring-fill" cx="50" cy="50" r="45"/>
+          </svg>
+          <div class="ring-text">
+            <div class="ring-percent" id="ring-percent">0%</div>
+            <div class="ring-sub">adherence</div>
+          </div>
+        </div>
+        <div class="adherence-info">
+          <h4>Medication Adherence</h4>
+          <p id="adherence-label">Add medications to start tracking</p>
+          <p style="font-size:11px;margin-top:6px;color:var(--text-muted)">
+            💡 Tip: Mark doses daily to maintain your streak and improve adherence.
+          </p>
+        </div>
+        <button class="btn-primary-custom" onclick="openAddMedModal()" style="margin-left:auto">
+          + Add Medication
+        </button>
+      </div>
+
+      <!-- Medication List -->
+      <div class="card">
+        <div class="card-header-custom">
+          <h5>💊 My Medications</h5>
+        </div>
+        <div class="card-body-custom">
+          <div id="med-list"></div>
+        </div>
+      </div>
+
+      <!-- Adherence Tips -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header-custom">
+          <h5>📌 Adherence Tips</h5>
+        </div>
+        <div class="card-body-custom">
+          <div class="tip-card"><div class="tip-icon-box">⏰</div><div class="tip-text">Set daily alarms on your phone as medication reminders — consistency is key.</div></div>
+          <div class="tip-card"><div class="tip-icon-box">🗓️</div><div class="tip-text">Use a weekly pill organizer (pill box) to pre-fill your weekly medications every Sunday.</div></div>
+          <div class="tip-card"><div class="tip-icon-box">🍽️</div><div class="tip-text">Take medications at mealtimes to build a routine and reduce forgetting doses.</div></div>
+          <div class="tip-card"><div class="tip-icon-box">👨‍👩‍👧</div><div class="tip-text">Ask a family member to remind you if you are managing a complex medication schedule.</div></div>
+        </div>
+      </div>
+
+    </div><!-- end panel-medications -->
+
+    <!-- ======================================================
+         PANEL: APPOINTMENTS
+         ====================================================== -->
+    <div id="panel-appointments" class="panel">
+
+      <div class="section-header">
+        <div class="section-title">📅 Appointment Reminders</div>
+        <div class="section-sub">Keep track of your upcoming doctor visits and health checkups.</div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn-primary-custom" onclick="openAddApptModal()">+ Add Appointment</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header-custom">
+          <h5>📋 Scheduled Appointments</h5>
+        </div>
+        <div class="card-body-custom">
+          <div id="appt-list"></div>
+        </div>
+      </div>
+
+      <!-- Specialist Guide -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header-custom">
+          <h5>🔍 When to See Which Doctor?</h5>
+        </div>
+        <div class="card-body-custom">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+            <div class="tip-card"><div class="tip-icon-box">🩺</div><div class="tip-text"><strong>General Physician</strong><br><span style="font-size:11.5px;color:var(--text-muted)">Fever, cold, body ache, routine checkup</span></div></div>
+            <div class="tip-card"><div class="tip-icon-box">❤️</div><div class="tip-text"><strong>Cardiologist</strong><br><span style="font-size:11.5px;color:var(--text-muted)">Chest pain, high BP, heart palpitations</span></div></div>
+            <div class="tip-card"><div class="tip-icon-box">🧠</div><div class="tip-text"><strong>Neurologist</strong><br><span style="font-size:11.5px;color:var(--text-muted)">Severe headache, numbness, stroke signs</span></div></div>
+            <div class="tip-card"><div class="tip-icon-box">🦴</div><div class="tip-text"><strong>Orthopaedic</strong><br><span style="font-size:11.5px;color:var(--text-muted)">Joint pain, fractures, back pain</span></div></div>
+            <div class="tip-card"><div class="tip-icon-box">👁️</div><div class="tip-text"><strong>Ophthalmologist</strong><br><span style="font-size:11.5px;color:var(--text-muted)">Vision changes, eye pain, diabetic eye care</span></div></div>
+            <div class="tip-card"><div class="tip-icon-box">👂</div><div class="tip-text"><strong>ENT Specialist</strong><br><span style="font-size:11.5px;color:var(--text-muted)">Ear pain, sore throat, sinusitis, tonsils</span></div></div>
+            <div class="tip-card"><div class="tip-icon-box">🫁</div><div class="tip-text"><strong>Pulmonologist</strong><br><span style="font-size:11.5px;color:var(--text-muted)">Breathing difficulty, asthma, TB, cough &gt;3 weeks</span></div></div>
+            <div class="tip-card"><div class="tip-icon-box">🧪</div><div class="tip-text"><strong>Endocrinologist</strong><br><span style="font-size:11.5px;color:var(--text-muted)">Diabetes, thyroid, PCOS, hormone issues</span></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end panel-appointments -->
+
+    <!-- ======================================================
+         PANEL: HEALTH PROFILE & BMI
+         ====================================================== -->
+    <div id="panel-profile" class="panel">
+
+      <div class="section-header">
+        <div class="section-title">🧍 Health Profile &amp; BMI</div>
+        <div class="section-sub">Enter your details to calculate BMI and save your health profile. Uses ICMR guidelines for South Asians.</div>
+      </div>
+
+      <div class="row g-4">
+        <!-- BMI Form -->
+        <div class="col-lg-7">
+          <div class="card">
+            <div class="card-header-custom">
+              <h5>📋 Personal Health Details</h5>
+            </div>
+            <div class="card-body-custom">
+              <form id="bmi-form" onsubmit="calculateBMI(event)">
+                <div class="row g-3">
+                  <div class="col-sm-6">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="profile_name" class="form-control" placeholder="e.g., Rahul Sharma" required>
+                  </div>
+                  <div class="col-sm-3">
+                    <label class="form-label">Age (years)</label>
+                    <input type="number" name="profile_age" class="form-control" placeholder="30" min="1" max="120" required>
+                  </div>
+                  <div class="col-sm-3">
+                    <label class="form-label">Gender</label>
+                    <select name="profile_gender" class="form-select" required>
+                      <option value="">Select</option>
+                      <option>Male</option>
+                      <option>Female</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label">Height (cm)</label>
+                    <input type="number" name="profile_height" class="form-control" placeholder="170" min="50" max="250" step="0.1" required>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label">Weight (kg)</label>
+                    <input type="number" name="profile_weight" class="form-control" placeholder="70" min="10" max="300" step="0.1" required>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Existing Medical Conditions</label>
+                    <input type="text" name="profile_conditions" class="form-control" placeholder="e.g., Type 2 Diabetes, Hypertension, Asthma (or leave blank)">
+                  </div>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:10px">
+                  <button type="submit" class="btn-primary-custom">Calculate BMI</button>
+                  <button type="reset" class="btn-outline-custom">Clear</button>
+                </div>
+              </form>
+              <!-- BMI Result -->
+              <div id="bmi-result" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BMI Scale Info -->
+        <div class="col-lg-5">
+          <div class="card" style="height:fit-content">
+            <div class="card-header-custom">
+              <h5>📏 BMI Scale (ICMR / South Asian)</h5>
+            </div>
+            <div class="card-body-custom">
+              <div class="tip-card" style="border-left:3px solid #0891b2">
+                <div class="tip-icon-box">⬇️</div>
+                <div class="tip-text"><strong>Below 18.5</strong> — Underweight<br><small>Nutritional assessment recommended</small></div>
+              </div>
+              <div class="tip-card" style="border-left:3px solid #16a34a">
+                <div class="tip-icon-box">✅</div>
+                <div class="tip-text"><strong>18.5 – 22.9</strong> — Normal (Healthy)<br><small>Ideal range for South Asians (ICMR)</small></div>
+              </div>
+              <div class="tip-card" style="border-left:3px solid #d97706">
+                <div class="tip-icon-box">⚠️</div>
+                <div class="tip-text"><strong>23 – 24.9</strong> — Overweight<br><small>Indian threshold is lower than Western standard</small></div>
+              </div>
+              <div class="tip-card" style="border-left:3px solid #dc2626">
+                <div class="tip-icon-box">🔴</div>
+                <div class="tip-text"><strong>25 – 29.9</strong> — Obese Class I<br><small>Consult physician &amp; dietitian</small></div>
+              </div>
+              <div class="tip-card" style="border-left:3px solid #7f1d1d">
+                <div class="tip-icon-box">🚨</div>
+                <div class="tip-text"><strong>30+</strong> — Obese Class II<br><small>Prompt physician consultation advised</small></div>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
+                * BMI thresholds based on ICMR and WHO Asia-Pacific guidelines.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end panel-profile -->
+
+    <!-- ======================================================
+         PANEL: PREVENTIVE HEALTH TIPS
+         ====================================================== -->
+    <div id="panel-tips" class="panel">
+
+      <div class="section-header">
+        <div class="section-title">🌿 Preventive Health Tips</div>
+        <div class="section-sub">Evidence-based tips based on WHO, CDC &amp; ICMR guidelines — tailored for Indian health needs.</div>
+      </div>
+
+      <!-- WHO/CDC Badge -->
+      <div style="margin-bottom:16px;padding:10px 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-muted)">
+        🌐 <strong style="color:var(--primary)">Information sourced from WHO and CDC guidelines</strong>
+        &nbsp;·&nbsp; ICMR (Indian Council of Medical Research)
+        &nbsp;·&nbsp; MoHFW India
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="tip-tab-bar">
+        <button id="tip-tab-general" class="tip-tab active" onclick="loadTips('general')">🌟 General Wellness</button>
+        <button id="tip-tab-diabetes" class="tip-tab" onclick="loadTips('diabetes')">🩸 Diabetes</button>
+        <button id="tip-tab-hypertension" class="tip-tab" onclick="loadTips('hypertension')">❤️ Hypertension</button>
+      </div>
+
+      <div id="tips-list"></div>
+
+      <!-- Emergency Contacts -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-header-custom">
+          <h5>🆘 Emergency &amp; Helpline Numbers (India)</h5>
+        </div>
+        <div class="card-body-custom">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+            <div style="padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;border-left:3px solid #dc2626">
+              <div style="font-weight:700;font-size:22px;color:#dc2626">108</div>
+              <div style="font-size:12px;font-weight:600">Ambulance &amp; Medical Emergency</div>
+              <div style="font-size:11px;color:var(--text-muted)">Available 24/7 across India</div>
+            </div>
+            <div style="padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;border-left:3px solid #7c3aed">
+              <div style="font-weight:700;font-size:16px;color:#7c3aed">080-46110007</div>
+              <div style="font-size:12px;font-weight:600">NIMHANS Mental Health</div>
+              <div style="font-size:11px;color:var(--text-muted)">National Institute of Mental Health</div>
+            </div>
+            <div style="padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;border-left:3px solid #0891b2">
+              <div style="font-weight:700;font-size:16px;color:#0891b2">9152987821</div>
+              <div style="font-size:12px;font-weight:600">iCall Helpline</div>
+              <div style="font-size:11px;color:var(--text-muted)">TISS — Mental Health Support</div>
+            </div>
+            <div style="padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;border-left:3px solid #16a34a">
+              <div style="font-weight:700;font-size:16px;color:#16a34a">1800-180-1104</div>
+              <div style="font-size:12px;font-weight:600">Arogya Setu Health Line</div>
+              <div style="font-size:11px;color:var(--text-muted)">MoHFW — Free health guidance</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end panel-tips -->
+
+    <!-- ======================================================
+         PANEL: FAMILY PROFILES
+         ====================================================== -->
+    <div id="panel-family" class="panel">
+
+      <div class="section-header">
+        <div class="section-title">👨‍👩‍👧 Family Health Profiles</div>
+        <div class="section-sub">Manage health profiles for your entire family. Add profiles via the Health Profile &amp; BMI section.</div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-5">
+          <div class="card">
+            <div class="card-header-custom">
+              <h5>👥 Family Members</h5>
+              <button class="btn-outline-custom" onclick="setActivePanel('profile')" style="padding:5px 12px;font-size:12px">+ Add Member</button>
+            </div>
+            <div class="card-body-custom">
+              <div id="family-list">
+                <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">
+                  No family profiles yet.<br>
+                  Add one using the <strong>Health Profile</strong> section.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-7">
+          <div class="card">
+            <div class="card-header-custom">
+              <h5>📋 Age-based Health Screening Guide</h5>
+            </div>
+            <div class="card-body-custom">
+              <div class="tip-card"><div class="tip-icon-box">👶</div><div class="tip-text"><strong>Children (0–12 years):</strong> Follow National Immunization Schedule (BCG, Polio, DPT, MMR). Annual growth monitoring and vision check.</div></div>
+              <div class="tip-card"><div class="tip-icon-box">🧑</div><div class="tip-text"><strong>Teens (13–19 years):</strong> Anaemia screening for girls. HPV vaccine. Dental checkup. Mental health awareness.</div></div>
+              <div class="tip-card"><div class="tip-icon-box">👨</div><div class="tip-text"><strong>Adults (20–40 years):</strong> Annual BP &amp; blood sugar check. Lipid profile every 3 years. Eye exam every 2 years.</div></div>
+              <div class="tip-card"><div class="tip-icon-box">🧔</div><div class="tip-text"><strong>Middle-aged (40–60 years):</strong> HbA1c, ECG, full thyroid panel, Vitamin D &amp; B12 annually. Colonoscopy at 50.</div></div>
+              <div class="tip-card"><div class="tip-icon-box">👴</div><div class="tip-text"><strong>Seniors (60+ years):</strong> Bone density scan (DEXA). Cardiac screening. Memory assessment. Flu &amp; pneumonia vaccines. Fall prevention.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end panel-family -->
+
+  </div><!-- end main-content -->
+</div><!-- end app-wrapper -->
+
+<!-- ============================================================
+     MODAL: Add Medication
+     ============================================================ -->
+<div id="med-modal" class="modal-bg">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h5 style="font-size:15px;font-weight:700;margin:0">💊 Add Medication</h5>
+      <button onclick="closeAddMedModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>
+    </div>
+    <form id="med-form" onsubmit="submitMedication(event)">
+      <div class="mb-3">
+        <label class="form-label">Medication Name</label>
+        <input type="text" name="med_name" class="form-control" placeholder="e.g., Metformin 500mg" required>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label">Dosage</label>
+          <input type="text" name="med_dosage" class="form-control" placeholder="e.g., 1 tablet" required>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Frequency</label>
+          <select name="med_frequency" class="form-select" required>
+            <option value="">Select</option>
+            <option>Once daily</option>
+            <option>Twice daily</option>
+            <option>Three times daily</option>
+            <option>Weekly</option>
+            <option>As needed</option>
+          </select>
+        </div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label">Time</label>
+          <input type="text" name="med_time" class="form-control" placeholder="e.g., Morning after breakfast">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Total Doses (month)</label>
+          <input type="number" name="med_total" class="form-control" value="30" min="1" max="365">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Notes (optional)</label>
+        <input type="text" name="med_notes" class="form-control" placeholder="e.g., Take with food, avoid grapefruit">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn-primary-custom flex-fill">Add Medication</button>
+        <button type="button" class="btn-outline-custom" onclick="closeAddMedModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Add Appointment
+     ============================================================ -->
+<div id="appt-modal" class="modal-bg">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h5 style="font-size:15px;font-weight:700;margin:0">📅 Add Appointment</h5>
+      <button onclick="closeAddApptModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>
+    </div>
+    <form id="appt-form" onsubmit="submitAppointment(event)">
+      <div class="mb-3">
+        <label class="form-label">Doctor's Name</label>
+        <input type="text" name="appt_doctor" class="form-control" placeholder="e.g., Dr. Priya Sharma" required>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label">Appointment Type</label>
+          <select name="appt_type" class="form-select" required>
+            <option value="">Select type</option>
+            <option>General Checkup</option>
+            <option>Follow-up</option>
+            <option>Specialist Consultation</option>
+            <option>Lab / Blood Tests</option>
+            <option>Dental</option>
+            <option>Eye Checkup</option>
+            <option>Vaccination</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Date</label>
+          <input type="date" name="appt_date" class="form-control" required>
+        </div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label">Time</label>
+          <input type="text" name="appt_time" class="form-control" placeholder="e.g., 10:30 AM">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Location / Hospital</label>
+          <input type="text" name="appt_location" class="form-control" placeholder="e.g., Apollo Hospital, Delhi">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Notes (optional)</label>
+        <input type="text" name="appt_notes" class="form-control" placeholder="e.g., Bring last 3 blood reports, fasting required">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn-primary-custom flex-fill">Add Appointment</button>
+        <button type="button" class="btn-outline-custom" onclick="closeAddApptModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOAST CONTAINER
+     ============================================================ -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/script.js"></script>
+
+</body>
+</html>
